@@ -61,8 +61,20 @@ class msg():
 
     def print(self):
         print(self.__dict__)
-
-
+        
+    def print_market_data(self):
+        print('msg:',MsgTypes[self.MsgType],  
+              self.MarketDataGroup,
+              self.SequenceNumber, 
+              self.latency*1000000%1, 
+              self.data.get('Timestamp',0)/10**9, 
+              lse_bin_symbol(self.data.get('Instrument',None)), 
+              self.data.get('Side',b'\x09').decode('utf-8'),
+              self.data.get('Price',0)/10**8, 
+              self.data.get('PreviousPrice',0)/10**8, 
+              self.data.get('Size',0)/10**4,
+              self.data.get('PreviousQuantity',0)/10**4
+             )
 
 def lse_bin_symbol(i):
     if i:
@@ -72,12 +84,24 @@ def lse_bin_symbol(i):
     else:
         return None 
 
+    
+TCP_field_names = ['sport', 'dport', 'len', 'chksum']
+IP_field_names=['len', 'src', 'dst','time']
+
 def read_block(x):
     m=msg()
+    m.UDPHeader={name:str(getattr(x[UDP],name)) for name in TCP_field_names}
+    m.IPHeader={name:str(getattr(x[IP],name)) for name in IP_field_names}
+    
+    x=x.load
+    
     m.BlockLength=int.from_bytes(x[0:2],byteorder='little')
     m.MessageCount =int.from_bytes(x[2:3],byteorder='little')
     m.MarketDataGroup=chr(int.from_bytes(x[3:4],byteorder='little'))
     m.SequenceNumber=int.from_bytes(x[4:8],byteorder='little')
+    
+    check_gap(m.SequenceNumber)
+    
     firstbytes=8
     l=[]
     
@@ -87,36 +111,32 @@ def read_block(x):
         m.Payload=x[firstbytes:firstbytes+m.MsgLength]
         m.MsgType=chr(int.from_bytes(m.Payload[2:3],byteorder='little'))
         firstbytes=firstbytes+m.MsgLength        
-        yield m
+        yield m    
         
-        
-TCP_field_names = ['sport', 'dport', 'len', 'chksum']
-IP_field_names=['len', 'src', 'dst']
-
 def parse_gtp(pk):
-#     print(pk.show())
     data=None
     if pk.getlayer('UDP'):
-        try:
-            UDPHeader=[name+"="+str(getattr(pk[UDP],name)) for name in TCP_field_names]
-            IPHeader=[name+"="+str(getattr(pk[IP],name)) for name in IP_field_names]
-#             print("!IPHEADER!",*UDPHeader,*IPHeader)
-            data=pk.load
-
-        except Exception as e:
-            print(e)
-            pass
-
-        if data:
+        
+        if pk.load:
             try:
-                decode(data)
+                decode(pk)
             except Exception as e:
+                raise e
                 pk.show()
                 print('exception',e)
 
+def check_gap(sn):
+    global seq_num
+    sn_diff=sn-seq_num
+    
+    if sn_diff>1:
+        print("!GAP! last:{} recieved:{} diff:{}".format(seq_num, sn, sn_diff))
+    seq_num=sn
+    
+    
 def decode(x):
+            
     for m in read_block(x):
-
         if m.MsgType:
             m.MsgTypeName=MsgTypes[m.MsgType]
             Class=globals()[MsgTypes[m.MsgType]]() #calls class function
@@ -127,33 +147,22 @@ def decode(x):
             fld=[n['name'] for n in Class.fields]
             Message=dict(zip(fld,val))
             m.data=Message
-            latency=0
             
             try:
                 tm=m.data.get('Timestamp',None)/10**9
-                latency=float(time.time())-float(tm) 
+                m.latency=float(time.time())-float(tm) 
             except: 
                 pass 
             
-            print(datetime.datetime.fromtimestamp(tm), 'msg:',MsgTypes[m.MsgType], m.MarketDataGroup, 
-                  m.SequenceNumber, latency,m.data)
+            m.print()
+#             print(datetime.datetime.fromtimestamp(tm), 'msg:',MsgTypes[m.MsgType], m.MarketDataGroup, 
+#                   m.SequenceNumber, m.latency,m.data,m.IPHeader)
             
-#             print('msg:',MsgTypes[m.MsgType],  
-#                   m.MarketDataGroup,
-#                   m.SequenceNumber, 
-#                   latency*1000000%1, 
-#                   m.data.get('Timestamp',0)/10**9, 
-#                   lse_bin_symbol(m.data.get('Instrument',None)), 
-#                   m.data.get('Side',b'\x09').decode('utf-8'),
-#                   m.data.get('Price',0)/10**8, 
-#                   m.data.get('PreviousPrice',0)/10**8, 
-#                   m.data.get('Size',0)/10**4,
-#                   m.data.get('PreviousQuantity',0)/10**4
-#                  )
 
         else:print("heartbeat")
 
 # path=sys.argv[1]
+seq_num=0
 
 path="c:\\Dev\\gtp.pcap"
 sniff(offline=path, store=False, prn=parse_gtp)
