@@ -72,7 +72,7 @@ class AddOrderIncremental(Serializer):
             {'name': 'SourceVenue', 'fmt': 'h'},
             {'name': 'OrderBookType', 'fmt': 'B'},
             {'name': 'Participant', 'fmt': '11s'},
-            {'name': 'OrderType', 'fmt': 'c'},
+            {'name': 'OrderType', 'fmt': 'b'},
             {'name': 'RFQID', 'fmt': '10s'}
         ]
 
@@ -88,8 +88,8 @@ class ModifyOrder(Serializer):
             {'name': 'OrderID', 'fmt': 'Q'},
             {'name': 'Instrument', 'fmt': 'Q'},
             {'name': 'Side', 'fmt': 'c'},
-            {'name': 'Flags', 'fmt': 'c'},
-            {'name': 'OrderBookType', 'fmt': 'B'},
+            {'name': 'Flags', 'fmt': 'b'},
+            {'name': 'OrderBookType', 'fmt': 'b'},
             {'name': 'Quantity', 'fmt': 'Q'},
             {'name': 'Price', 'fmt': 'Q'},
             {'name': 'Yield', 'fmt': 'Q'},
@@ -136,7 +136,9 @@ class TradeSummary(Serializer):
             {'name': 'TotalExecutedQuantity', 'fmt': 'Q'},
             {'name': 'TotalHiddenExecutedQuantity', 'fmt': 'Q'},
             {'name': 'DeletedOrderQuantity', 'fmt': 'Q'},
-        ]
+            {'name': 'Side', 'fmt': 'c'}
+
+	]
 
         Serializer.__init__(self, tag, fields)
         
@@ -156,8 +158,8 @@ class Trade(Serializer):
             {'name': 'Yield', 'fmt': 'Q'},
             {'name': 'TradeID', 'fmt': 'Q'},
             {'name': 'TradeType', 'fmt': 'B'},
-            {'name': 'AuctionType', 'fmt': 'B'},
-            {'name': 'Flags', 'fmt': 'B'},
+            {'name': 'AuctionType', 'fmt': 'c'},
+            {'name': 'Flags', 'fmt': 'b'},
             {'name': 'HiddenExecutionIndicator', 'fmt': 'B'}
         ]
         Serializer.__init__(self, tag, fields)
@@ -196,7 +198,7 @@ class InstrumentStatus(Serializer):
             {'name': 'Timestamp', 'fmt': 'Q'},
             {'name': 'Instrument', 'fmt': 'Q'},
             {'name': 'SourceVenue', 'fmt': 'h'},
-            {'name': 'TradingStatus', 'fmt': 'b'},
+            {'name': 'TradingStatus', 'fmt': 'c'},
             {'name': 'SessionChangeReason', 'fmt': 'b'},
             {'name': 'NewEndTime', 'fmt': '6s'},
             {'name': 'OrderBookType', 'fmt': 'b'}
@@ -225,7 +227,7 @@ class TopOfBook(Serializer):
             {'name': 'OfferYield', 'fmt': 'Q'},
             {'name': 'OfferLimitSize', 'fmt': 'Q'},
             {'name': 'OrderBookType', 'fmt': 'b'},
-            {'name': 'Flags', 'fmt': 'B'}
+            {'name': 'Flags', 'fmt': 'b'}
             
         ]
         Serializer.__init__(self, tag, fields)
@@ -248,7 +250,6 @@ class StatisticsUpdate(Serializer):
             {'name': 'AuctionType', 'fmt': 'c'},
             {'name': 'ImbalanceQuantity', 'fmt': 'Q'},
             {'name': 'AuctionInfo', 'fmt': 'c'},
-            
             {'name': 'OpeningClosingPriceIndicator', 'fmt': 'c'}
             
         ]
@@ -354,7 +355,7 @@ class SystemEvent(Serializer):
             {'name': 'Length', 'fmt': 'H'},
             {'name': 'MessageType', 'fmt': 'c'},
             {'name': 'Timestamp', 'fmt': 'Q'},
-            {'name': 'Instrument', 'fmt': 'Q'},
+            {'name': 'EventCode', 'fmt': 'c'},
             {'name': 'SourceVenue', 'fmt': 'h'},
             
         ]
@@ -443,11 +444,12 @@ class StatisticsSnapshot(Serializer):
             {'name': 'TradeLow', 'fmt': 'Q'},
             {'name': '52wkTradeHigh', 'fmt': 'Q'},
             {'name': '52wkTradeLow', 'fmt': 'Q'},
-            {'name': 'OpeningPriceIndicator', 'fmt': 'Q'},
+            {'name': 'OpeningPriceIndicator', 'fmt': 'b'},
+            {'name': 'ClosingPriceIndicator', 'fmt': 'b'},
             {'name': 'IAUPrice', 'fmt': 'Q'},
             {'name': 'IAUPairedSize', 'fmt': 'Q'},
             {'name': 'ImbalanceQuantity', 'fmt': 'Q'},
-            {'name': 'ImbalanceDirection', 'fmt': 'Q'},
+            {'name': 'ImbalanceDirection', 'fmt': 'b'},
             {'name': 'BestClosingBidPrice', 'fmt': 'Q'},
             {'name': 'BestClosingAskPrice', 'fmt': 'Q'},
             {'name': 'BestClosingBidSize', 'fmt': 'Q'},
@@ -456,7 +458,7 @@ class StatisticsSnapshot(Serializer):
             {'name': 'TradeLowOffBook', 'fmt': 'Q'},
             {'name': 'OpenInterest', 'fmt': 'Q'},
             {'name': 'Volatility', 'fmt': 'Q'},
-            {'name': 'AuctionType', 'fmt': 'b'},
+            {'name': 'AuctionType', 'fmt': 'c'},
             {'name': 'LastTradePrice', 'fmt': 'Q'},
             {'name': 'LastTradeQuantity', 'fmt': 'Q'},
             {'name': 'LastTradeTime', 'fmt': 'Q'},
@@ -487,3 +489,5 @@ class Announcements(Serializer):
         ]
             
         Serializer.__init__(self, tag, fields)
+
+
